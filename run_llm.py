@@ -135,13 +135,20 @@ load_model_kwargs = {'torch_dtype': torch.bfloat16,
 #                                         weight_pooling=args.span_weight_pooling, 
 #                                         span_weight=args.span_loss_weight, 
 #                                         sft_path=teacher_sft_path)
-
-teacher_model = TeacherQwen(model_name = args.teacher_model, 
-                            load_model_kwargs = load_model_kwargs,
-                            export_hidden_state_layers=args.teacher_layers_mapping, 
-                            weight_pooling=args.span_weight_pooling, 
-                            span_weight=args.span_loss_weight, 
-                            sft_path=teacher_sft_path)
+if runtime_args.teacher_model_type == 'qwen':
+    teacher_model = TeacherQwen(model_name = args.teacher_model, 
+                                load_model_kwargs = load_model_kwargs,
+                                export_hidden_state_layers=args.teacher_layers_mapping, 
+                                weight_pooling=args.span_weight_pooling, 
+                                span_weight=args.span_loss_weight, 
+                                sft_path=teacher_sft_path)
+else:
+    teacher_model = TeacherMistral7B(model_name = args.teacher_model, 
+                                load_model_kwargs = load_model_kwargs,
+                                export_hidden_state_layers=args.teacher_layers_mapping, 
+                                weight_pooling=args.span_weight_pooling, 
+                                span_weight=args.span_loss_weight, 
+                                sft_path=teacher_sft_path)
 
 # teacher_model = None
 
