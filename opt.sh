@@ -19,11 +19,11 @@ DEFAULT_ARGS=(
   --student_tokenizer "facebook/opt-2.7b"
   --teach_device "cuda:7"
   --student_device "cuda:7"
-  --teacher_layers_mapping 24 26 28
-  --student_encoder_layers_finetuned 28 30 32
+  --teacher_layers_mapping 26 28
+  --student_encoder_layers_finetuned 30 32
   --n_encoder_finetuned 32
   --teacher_embedding_dimension 3584
-  --hidden_loss_weights 1 1 1
+  --hidden_loss_weights 1 1
   --output_dir facebook-checkpoint
   --student_model_type opt
   --teacher_model_type qwen

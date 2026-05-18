@@ -18,11 +18,11 @@ DEFAULT_ARGS=(
   --student_tokenizer "TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T"
   --teach_device "cuda:6"
   --student_device "cuda:6"
-  --teacher_layers_mapping 28 30 32
-  --student_encoder_layers_finetuned 18 20 22
+  --teacher_layers_mapping 30 32
+  --student_encoder_layers_finetuned 20 22
   --n_encoder_finetuned 22
   --teacher_embedding_dimension 4096
-  --hidden_loss_weights 1 1 1
+  --hidden_loss_weights 1 1
   --output_dir tinyllama-checkpoint
   --student_model_type tinyllama
   --teacher_model_type mistral

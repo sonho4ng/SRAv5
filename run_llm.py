@@ -97,7 +97,7 @@ args = Arguments(
 
     p=1,
 
-    output_dir='gpt2-checkpoint',
+    output_dir=runtime_args.output_dir,
 
 
     teacher_model=runtime_args.teacher_model,
@@ -231,7 +231,7 @@ load_student_model_kwargs = {'device_map': args.student_device,
 from types import SimpleNamespace
 
 lora_conf = SimpleNamespace(**{
-    "lora_rank": 16,
+    "lora_rank": 32,
     "lora_alpha": 64,
     "lora_dropout": 0.1,
     "lora_target_modules": [
@@ -268,6 +268,40 @@ def get_token_mapping(s_tokenizer, t_tokenizer, device):
             t_id_mapping.append(t_vocab[s_token])
 
     return torch.tensor(s_id_mapping, device=device), torch.tensor(t_id_mapping, device=device)
+
+
+def debug_token_alignment(student_inputs, teacher_inputs, student_tokenizer, teacher_tokenizer,
+                          epoch, step, max_segments=3, max_tokens_per_segment=12):
+    def _render(name, inputs, tokenizer):
+        input_ids = inputs['input_ids'][0]
+        attention_mask = inputs['attention_mask'][0]
+        tokens = tokenizer.convert_ids_to_tokens(input_ids)
+        seq_len = int(attention_mask.sum().item())
+
+        print(f'[{name}] seq_len={seq_len}')
+        print(f'[{name}] first tokens: {tokens[:min(len(tokens), 24)]}')
+
+        if 'pooler_safe_idx' not in inputs or 'pooler_mask' not in inputs:
+            print(f'[{name}] pooler tensors are missing')
+            return
+
+        safe_idx = inputs['pooler_safe_idx'][0]
+        pooler_mask = inputs['pooler_mask'][0]
+        n_segments = min(max_segments, safe_idx.size(0))
+
+        for seg_idx in range(n_segments):
+            segment_mask = pooler_mask[seg_idx].bool()
+            segment_positions = safe_idx[seg_idx][segment_mask]
+            if segment_positions.numel() == 0:
+                continue
+
+            segment_positions = segment_positions.tolist()
+            segment_tokens = [tokens[pos] for pos in segment_positions[:max_tokens_per_segment] if pos < len(tokens)]
+            print(f'[{name}] seg {seg_idx}: idx={segment_positions[:max_tokens_per_segment]} tok={segment_tokens}')
+
+    print(f'\n=== token align debug: epoch={epoch + 1}, step={step} ===')
+    _render('student', student_inputs, student_tokenizer)
+    _render('teacher', teacher_inputs, teacher_tokenizer)
 
 class Trainer:
     def __init__(self, student: StudentCausalModel, 
@@ -438,7 +472,7 @@ class Trainer:
                 t_map_logits = t_logits[:, :, self.t_id_mapping]
                 kd_loss += self.soft_label_distill_loss(s_map_logits, t_map_logits)
 
-                # kd_loss += self.manual_kl_div(s_logits, t_logits)
+                kd_loss += self.manual_kl_div(s_logits, t_logits)
 
         return kd_loss, temp_loss.item()
 
@@ -598,6 +632,14 @@ for epoch in range(args.num_train_epochs):
             if args.knowledge_distillation and trainer.teacher_model is not None:
                 next_teacher_outputs = teacher_future.result()
             continue
+
+        if step == 0 and teacher_inputs is not None:
+            debug_token_alignment(student_inputs,
+                                  teacher_inputs,
+                                  trainer.student_tokenizer,
+                                  trainer.teacher_tokenizer,
+                                  epoch,
+                                  step)
 
         # optimizer.zero_grad(set_to_none=True)
 
