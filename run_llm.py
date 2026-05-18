@@ -296,12 +296,48 @@ def debug_token_alignment(student_inputs, teacher_inputs, student_tokenizer, tea
                 continue
 
             segment_positions = segment_positions.tolist()
-            segment_tokens = [tokens[pos] for pos in segment_positions[:max_tokens_per_segment] if pos < len(tokens)]
-            print(f'[{name}] seg {seg_idx}: idx={segment_positions[:max_tokens_per_segment]} tok={segment_tokens}')
+            segment_positions = [pos for pos in segment_positions if pos < len(tokens)]
+            segment_tokens = [tokens[pos] for pos in segment_positions[:max_tokens_per_segment]]
+            segment_text = tokenizer.decode(
+                input_ids[segment_positions],
+                skip_special_tokens=True,
+                clean_up_tokenization_spaces=False,
+            )
+            print(f'[{name}] seg {seg_idx}: idx={segment_positions[:max_tokens_per_segment]}')
+            print(f'[{name}] seg {seg_idx}: tok={segment_tokens}')
+            print(f'[{name}] seg {seg_idx}: text={repr(segment_text)}')
 
     print(f'\n=== token align debug: epoch={epoch + 1}, step={step} ===')
     _render('student', student_inputs, student_tokenizer)
     _render('teacher', teacher_inputs, teacher_tokenizer)
+
+    student_segments = student_inputs['pooler_safe_idx'][0]
+    teacher_segments = teacher_inputs['pooler_safe_idx'][0]
+    student_masks = student_inputs['pooler_mask'][0]
+    teacher_masks = teacher_inputs['pooler_mask'][0]
+    compare_segments = min(max_segments, student_segments.size(0), teacher_segments.size(0))
+
+    print('--- aligned segment comparison ---')
+    for seg_idx in range(compare_segments):
+        student_pos = student_segments[seg_idx][student_masks[seg_idx].bool()].tolist()
+        teacher_pos = teacher_segments[seg_idx][teacher_masks[seg_idx].bool()].tolist()
+        student_pos = [pos for pos in student_pos if pos < student_inputs['input_ids'][0].size(0)]
+        teacher_pos = [pos for pos in teacher_pos if pos < teacher_inputs['input_ids'][0].size(0)]
+
+        student_text = student_tokenizer.decode(
+            student_inputs['input_ids'][0][student_pos],
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False,
+        ) if student_pos else ''
+        teacher_text = teacher_tokenizer.decode(
+            teacher_inputs['input_ids'][0][teacher_pos],
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False,
+        ) if teacher_pos else ''
+
+        print(f'[cmp seg {seg_idx}] student={repr(student_text)}')
+        print(f'[cmp seg {seg_idx}] teacher={repr(teacher_text)}')
+        print(f'[cmp seg {seg_idx}] match={student_text == teacher_text}')
 
 class Trainer:
     def __init__(self, student: StudentCausalModel, 
@@ -472,7 +508,7 @@ class Trainer:
                 t_map_logits = t_logits[:, :, self.t_id_mapping]
                 kd_loss += self.soft_label_distill_loss(s_map_logits, t_map_logits)
 
-                kd_loss += self.manual_kl_div(s_logits, t_logits)
+                # kd_loss += self.manual_kl_div(s_logits, t_logits)
 
         return kd_loss, temp_loss.item()
 
