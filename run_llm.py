@@ -53,9 +53,9 @@ student_encoder_layers_finetuned = runtime_args.student_encoder_layers_finetuned
 hidden_loss_weights = runtime_args.hidden_loss_weights or [1.0, 1.0, 1.0]
 
 args = Arguments(
-    train_data='llm-data/dolly/train.jsonl', 
-    val_data='llm-data/dolly/dev.jsonl', 
-    test_data='llm-data/dolly/valid.jsonl',
+    train_data='data/llm/dolly/train.jsonl', 
+    val_data='data/llm/dolly/dev.jsonl', 
+    test_data='data/llm/dolly/valid.jsonl',
     num_labels=1,
     batch_size=2,
     val_batch_size=64,
