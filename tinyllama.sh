@@ -16,8 +16,8 @@ DEFAULT_ARGS=(
   --teacher_tokenizer "mistralai/Mistral-7B-v0.1"
   --student_model "TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T"
   --student_tokenizer "TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T"
-  --teach_device "cuda:6"
-  --student_device "cuda:6"
+  --teach_device "cuda:4"
+  --student_device "cuda:4"
   --teacher_layers_mapping 30 32
   --student_encoder_layers_finetuned 20 22
   --n_encoder_finetuned 22

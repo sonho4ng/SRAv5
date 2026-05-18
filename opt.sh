@@ -17,8 +17,8 @@ DEFAULT_ARGS=(
   --teacher_tokenizer "Qwen/Qwen2.5-7B-Instruct"
   --student_model "facebook/opt-2.7b"
   --student_tokenizer "facebook/opt-2.7b"
-  --teach_device "cuda:7"
-  --student_device "cuda:7"
+  --teach_device "cuda:5"
+  --student_device "cuda:5"
   --teacher_layers_mapping 26 28
   --student_encoder_layers_finetuned 30 32
   --n_encoder_finetuned 32
