@@ -21,7 +21,7 @@ from typing import Type
 
 
 def load_tokenizer(model_type, path, kwargs):        
-    tokenizer = AutoTokenizer.from_pretrained(path, trust_remote_code=True, **kwargs)
+    tokenizer = AutoTokenizer.from_pretrained(path, trust_remote_code=True, padding_side="right", **kwargs)
     if model_type in ["gpt2", "opt", "llama", "gptj", "llama2", "mistral", "tinyllama", "minicpm"]:
         tokenizer.pad_token_id = tokenizer.eos_token_id
         tokenizer.pad_token = tokenizer.eos_token
